@@ -1,0 +1,206 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE xml>
+<!-- To change this license header, choose License Headers in Project Properties. 
+	To change this template file, choose Tools | Templates and open the template 
+	in the editor. -->
+<sql>
+	<entity id="getCountCustAndProdHier">
+		<query> 
+            <![CDATA[
+                SELECT
+                    Count(c.HIERARCHY_DEFINITION_SID)
+                FROM
+                    dbo.HIERARCHY_LEVEL_DEFINITION A,
+                    HIERARCHY_LEVEL_DEFINITION b,
+                    dbo.HIERARCHY_DEFINITION C
+                WHERE
+                    a.HIERARCHY_DEFINITION_SID = b.HIERARCHY_DEFINITION_SID
+                    AND a.HIERARCHY_DEFINITION_SID = c.HIERARCHY_DEFINITION_SID
+                    AND c.HIERARCHY_CATEGORY IN(
+                        SELECT
+                            ht.HELPER_TABLE_SID
+                        FROM
+                            dbo.HELPER_TABLE ht
+                        WHERE
+                            ht.LIST_NAME = 'HIERARCHY_CATEGORY'
+                            AND ht.DESCRIPTION LIKE '?'
+                    )
+                    AND b.HIERARCHY_DEFINITION_SID = c.HIERARCHY_DEFINITION_SID
+                    AND a.LEVEL_NO IN(
+                        SELECT
+                            MAX(h.LEVEL_NO)
+                        FROM
+                            HIERARCHY_LEVEL_DEFINITION h
+                        WHERE
+                            h.HIERARCHY_DEFINITION_SID = a.HIERARCHY_DEFINITION_SID
+                    )
+                    AND b.LEVEL_NO IN(
+                        SELECT
+                            MIN(h.LEVEL_NO)
+                        FROM
+                            HIERARCHY_LEVEL_DEFINITION h
+                        WHERE
+                            h.HIERARCHY_DEFINITION_SID = b.HIERARCHY_DEFINITION_SID
+                    )
+                    AND c.HIERARCHY_NAME LIKE '?'
+                    AND c.HIERARCHY_TYPE IN(
+                        SELECT
+                            ht.HELPER_TABLE_SID
+                        FROM
+                            dbo.HELPER_TABLE ht
+                        WHERE
+                            ht.DESCRIPTION LIKE '?'
+                    )
+                    ? ? ? ? ? 
+                    ]]>
+		</query>
+	</entity>
+	<entity id="getCustAndProdHier">
+		<query> 
+            <![CDATA[
+                SELECT 
+                    c.HIERARCHY_NAME,
+                    a.LEVEL_NO as HIGH_LEVEL,
+                    b.LEVEL_NO as LOW_LEVEL,
+                    c.CREATED_DATE,
+                    c.MODIFIED_DATE
+                FROM
+                    dbo.HIERARCHY_LEVEL_DEFINITION A,
+                    HIERARCHY_LEVEL_DEFINITION b,
+                    dbo.HIERARCHY_DEFINITION C
+                WHERE
+                    a.HIERARCHY_DEFINITION_SID = b.HIERARCHY_DEFINITION_SID
+                    AND a.HIERARCHY_DEFINITION_SID = c.HIERARCHY_DEFINITION_SID
+                    AND c.HIERARCHY_CATEGORY IN(
+                        SELECT
+                            ht.HELPER_TABLE_SID
+                        FROM
+                            dbo.HELPER_TABLE ht
+                        WHERE
+                            ht.LIST_NAME = 'HIERARCHY_CATEGORY'
+                            AND ht.DESCRIPTION LIKE '?'
+                    )
+                    AND b.HIERARCHY_DEFINITION_SID = c.HIERARCHY_DEFINITION_SID
+                    AND a.LEVEL_NO IN(
+                        SELECT
+                            MAX(h.LEVEL_NO)
+                        FROM
+                            HIERARCHY_LEVEL_DEFINITION h
+                        WHERE
+                            h.HIERARCHY_DEFINITION_SID = a.HIERARCHY_DEFINITION_SID
+                    )
+                    AND b.LEVEL_NO IN(
+                        SELECT
+                            MIN(h.LEVEL_NO)
+                        FROM
+                            HIERARCHY_LEVEL_DEFINITION h
+                        WHERE
+                            h.HIERARCHY_DEFINITION_SID = b.HIERARCHY_DEFINITION_SID
+                    )
+                    AND c.HIERARCHY_NAME LIKE '?'
+                    AND c.HIERARCHY_TYPE IN(
+                        SELECT
+                            ht.HELPER_TABLE_SID
+                        FROM
+                            dbo.HELPER_TABLE ht
+                        WHERE
+                            ht.DESCRIPTION LIKE '?'
+                    )
+                    ?
+                    ?
+                    ? ? ?
+                    ORDER BY ? OFFSET ? ROWS FETCH NEXT ? ROWS ONLY
+            ]]>
+		</query>
+	</entity>
+	<entity id="getAllDeductions">
+		<query> 
+            <![CDATA[
+            SELECT
+	DISTINCT CONCAT( A.RS_CATEGORY, ' ~ ', H1.DESCRIPTION ) AS CATEGORY,
+	CONCAT( A.RS_TYPE, ' ~ ', H2.DESCRIPTION ) AS RS_TYPE,
+	CONCAT( A.REBATE_PROGRAM_TYPE, ' ~ ', H3.DESCRIPTION ) AS REBATE_PROGRAM_TYPE,
+	CONCAT( A.RS_MODEL_SID, ' ~ ', A.RS_ID ),
+	UDC_2 = CASE
+		WHEN U.UDC2 IS NULL
+		OR U.UDC2 = 0 THEN '0~NO UDC2'
+		ELSE CONCAT( U.UDC2, ' ~ ', H5.DESCRIPTION )
+	END,
+	UDC_3 = CASE
+		WHEN U.UDC3 IS NULL
+		OR U.UDC3 = 0 THEN '0~NO UDC3'
+		ELSE CONCAT( U.UDC3, ' ~ ', H6.DESCRIPTION )
+	END,
+	UDC_4 = CASE
+		WHEN U.UDC4 IS NULL
+		OR U.UDC4 = 0 THEN '0~NO UDC4'
+		ELSE CONCAT( U.UDC4, ' ~ ', H7.DESCRIPTION )
+	END,
+	UDC_5 = CASE
+		WHEN U.UDC5 IS NULL
+		OR U.UDC5 = 0 THEN '0~NO UDC5'
+		ELSE CONCAT( U.UDC5, ' ~ ', H8.DESCRIPTION )
+	END,
+	UDC_6 = CASE
+		WHEN U.UDC6 IS NULL
+		OR U.UDC6 = 0 THEN '0~NO UDC6'
+		ELSE CONCAT( U.UDC6, ' ~ ', H9.DESCRIPTION )
+	END,
+	CONCAT( A.RS_CONTRACT_SID, ' ~ ', 'RS_ID' ) AS RS_CONTRACT_SID
+FROM
+	RS_CONTRACT A
+JOIN HELPER_TABLE H1 ON
+	H1.HELPER_TABLE_SID = A.RS_CATEGORY
+JOIN HELPER_TABLE H2 ON
+	H2.HELPER_TABLE_SID = A.RS_TYPE
+JOIN HELPER_TABLE H3 ON
+	H3.HELPER_TABLE_SID = A.REBATE_PROGRAM_TYPE
+LEFT JOIN UDCS U ON
+	U.MASTER_SID = A.RS_CONTRACT_SID
+	AND U.MASTER_TYPE = 'RS_CONTRACT'
+LEFT JOIN HELPER_TABLE H5 ON
+	H5.HELPER_TABLE_SID = U.UDC2
+LEFT JOIN HELPER_TABLE H6 ON
+	H6.HELPER_TABLE_SID = U.UDC3
+LEFT JOIN HELPER_TABLE H7 ON
+	H7.HELPER_TABLE_SID = U.UDC4
+LEFT JOIN HELPER_TABLE H8 ON
+	H8.HELPER_TABLE_SID = U.UDC5
+LEFT JOIN HELPER_TABLE H9 ON
+	H9.HELPER_TABLE_SID = U.UDC6
+WHERE
+	A.RS_CATEGORY NOT IN(0)
+	AND A.RS_TYPE NOT IN(0)
+	AND A.REBATE_PROGRAM_TYPE NOT IN(0)
+	AND A.INBOUND_STATUS <> 'D' 
+
+            ]]>
+		</query>
+	</entity>
+
+	<entity id="getCountViewSearchLookup">
+		<query> 
+            <![CDATA[
+                SELECT COUNT(*)
+                FROM
+                FORECASTING_VIEW_MASTER FVM 
+                JOIN ?.dbo.User_ usr
+                         ON usr.UserId = FVM.CREATED_BY
+                WHERE ?
+                    ]]>
+		</query>
+	</entity>
+	<entity id="getViewSearchLookupData">
+		<query> 
+            <![CDATA[
+                SELECT FVM.VIEW_NAME, FVM.CREATED_DATE,FVM.MODIFIED_DATE, CONCAT(usr.LastName ,', ',  usr.firstName) as VIEW_CREATED_BY,FVM.VIEW_TYPE, FVM.VIEW_ID 
+                FROM FORECASTING_VIEW_MASTER FVM
+                JOIN ?.dbo.User_ usr
+                         ON usr.UserId = FVM.CREATED_BY
+                WHERE ?
+                ORDER BY ? OFFSET ? ROWS FETCH NEXT ? ROWS ONLY
+                    ]]>
+		</query>
+	</entity>
+
+</sql>
